@@ -4,6 +4,8 @@
 void Left_RoTate(rbtree *T, node_t *x);
 void Right_RoTate(rbtree *T, node_t *x);
 void Insert_FixUp(rbtree *T, node_t *z);
+void TransPlant(rbtree *T, node_t *u, node_t *v);
+void Delete_FixUp(rbtree *T, node_t *x);
 
 rbtree *new_rbtree(void) {
   rbtree *p = (rbtree *)calloc(1, sizeof(rbtree));
@@ -21,8 +23,18 @@ rbtree *new_rbtree(void) {
   return p;
 }
 
+void delete_node(rbtree *t, node_t *node) {
+  // TODO: reclaim the tree nodes's memory
+  if(node == t->nil) return;
+  delete_node(t, node->left);
+  delete_node(t, node->right);
+  free(node);
+}
+
 void delete_rbtree(rbtree *t) {
   // TODO: reclaim the tree nodes's memory
+  delete_node(t, t->root);
+  free(t->nil);
   free(t);
 }
 
@@ -55,7 +67,13 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
 
 node_t *rbtree_find(const rbtree *t, const key_t key) {
   // TODO: implement find
-  return t->root;
+  node_t *cur = t->root;
+  while(cur != t->nil) {
+    if(key == cur->key) return cur; // 동일한 key 값 찾으면 반환
+    else if(key < cur->key) cur = cur->left;
+    else cur = cur->right;
+  }
+  return NULL;
 }
 
 node_t *rbtree_min(const rbtree *t) {
@@ -98,26 +116,24 @@ void Left_RoTate(rbtree *T, node_t *x) {
   x->parent = y;
 }
 
-void Right_RoTate(rbtree *T, node_t *x) {
-  node_t *y;
+void Right_RoTate(rbtree *T, node_t *y) {
+  node_t *x;
 
-  y = x->right;
-  x->right = y->left;
+  x = y->left;
+  y->left = x->right;
 
-  if(y->left != T->nil) y->left->parent = x;
+  if(x->right != T->nil) x->right->parent = y;
 
-  y->parent = x->parent;
+  x->parent = y->parent;
 
-  if(x->parent == T->nil) T->root = y;
+  if(y->parent == T->nil) T->root = x;
 
-  else if(x == x->parent->left) x->parent->left = y;
+  else if(y == y->parent->right) y->parent->left = x;
 
-  else x->parent->right = y;
+  else y->parent->left = x;
 
-  Insert_FixUp(T, x);
-
-  y->left = x;
-  x->parent = y;
+  x->right = y;
+  y->parent = x;
 }
 
 
@@ -164,4 +180,70 @@ void Insert_FixUp(rbtree *T, node_t *z) {
     }
    }
   T->root->color = RBTREE_BLACK;
+}
+
+void TransPlant(rbtree *T, node_t *u, node_t *v) {
+  if(u->parent == T->nil) T->root = v;
+  else if(u == u->parent->left) u->parent->left = v;
+  else u->parent->right = v;
+  v->parent = u->parent;
+}
+
+void Delete_FixUp(rbtree *T, node_t *x) {
+  node_t *w;
+  while(x != T->root && x->color == RBTREE_BLACK) {
+    if(x == x->parent->left) {
+      w = x->parent->right;
+      if(w->color == RBTREE_RED) {
+        w->color = RBTREE_BLACK;
+        x->parent->color = RBTREE_RED;
+	Left_RoTate(T, x->parent);
+	w = x->parent->right;
+      }
+      if(w->left->color == RBTREE_BLACK && w->right->color == RBTREE_BLACK) {
+	w->color = RBTREE_RED;
+	x = x->parent;
+      }
+      else {
+        if(w->right->color == RBTREE_BLACK) {
+          w->left->color = RBTREE_BLACK;
+	  w->color = RBTREE_RED;
+	  Right_RoTate(T, w);
+	  w = x->parent->right;
+	}
+	w->color = x->parent->color;
+	x->parent->color = RBTREE_BLACK;
+	w->right->color = RBTREE_BLACK;
+	Left_RoTate(T, x->parent);
+	x = T->root;
+      }
+    }
+    else {
+      w = x->parent->left;
+      if(w->color == RBTREE_RED) {
+        w->color = RBTREE_BLACK;
+	x->parent->color = RBTREE_RED;
+	Right_RoTate(T, x->parent);
+	w = x->parent->left;
+      }
+      if(w->right->color == RBTREE_BLACK && w->left->color == RBTREE_BLACK) {
+	w->color = RBTREE_RED;
+	x = x->parent;
+      }
+      else {
+        if(w->left->color == RBTREE_BLACK) {
+	  w->right->color = RBTREE_BLACK;
+	  w->color = RBTREE_RED;
+	  Left_RoTate(T, w);
+	  w = x->parent->left;
+	}
+	w->color = x->parent->color;
+	x->parent->color = RBTREE_BLACK;
+	w->left->color = RBTREE_BLACK;
+	Right_RoTate(T, x->parent);
+	x = T->root;
+      }
+    }
+  }
+  x->color = RBTREE_BLACK;
 }
