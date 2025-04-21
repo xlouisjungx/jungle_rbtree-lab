@@ -119,10 +119,7 @@ int rbtree_erase(rbtree *t, node_t *z) {
     TransPlant(t, z, z->left);
   }
   else {
-    y = z->right;
-    while(y->left != t->nil) 
-      y = y->left;
-
+    y = successor(t, z->right);
     y_original_color = y->color;
     x = y->right;
 
@@ -131,8 +128,7 @@ int rbtree_erase(rbtree *t, node_t *z) {
       y->right = z->right;
       y->right->parent = y;
     }
-    else if(x != t->nil) 
-      x->parent = y;
+    else x->parent = y;
 
     TransPlant(t, z, y);
     y->left = z->left;
@@ -207,7 +203,7 @@ void Right_RoTate(rbtree *T, node_t *y) {
 
   if(y->parent == T->nil) T->root = x;
 
-  else if(y == y->parent->right) y->parent->left = x;
+  else if(y == y->parent->right) y->parent->right = x;
 
   else y->parent->left = x;
 
