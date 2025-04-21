@@ -6,6 +6,7 @@ void Right_RoTate(rbtree *T, node_t *x);
 void Insert_FixUp(rbtree *T, node_t *z);
 void TransPlant(rbtree *T, node_t *u, node_t *v);
 void Delete_FixUp(rbtree *T, node_t *x);
+node_t *successor(rbtree *t, node_t *s);
 
 rbtree *new_rbtree(void) {
   rbtree *p = (rbtree *)calloc(1, sizeof(rbtree));
@@ -62,6 +63,8 @@ node_t *rbtree_insert(rbtree *t, const key_t key) {
   else if(key < parent->key) parent->left = Nnode;
   else parent->right = Nnode;
 
+  Insert_FixUp(t, Nnode);
+
   return t->root;
 }
 
@@ -78,21 +81,97 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
 
 node_t *rbtree_min(const rbtree *t) {
   // TODO: implement find
-  return t->root;
+  node_t *cur = t->root;
+  while(cur->left != t->nil) cur = cur->left;
+
+  return cur;
 }
 
 node_t *rbtree_max(const rbtree *t) {
   // TODO: implement find
-  return t->root;
+  node_t *cur = t->root;
+  while(cur->right != t->nil) cur = cur->right;
+
+  return cur;
 }
 
-int rbtree_erase(rbtree *t, node_t *p) {
+node_t *successor(rbtree *t, node_t *s){
+  node_t *cur = s;
+
+  while (cur->left != t->nil){
+    cur = cur->left;
+  }
+  
+  return cur;
+}
+
+int rbtree_erase(rbtree *t, node_t *z) {
   // TODO: implement erase
+  node_t *y, *x;
+  y = z;
+  color_t y_original_color = y->color;
+  if(z->left == t->nil) {
+    x = z->right;
+    TransPlant(t, z, z->right);
+  }
+  else if(z->right == t->nil) {
+    x = z->left;
+    TransPlant(t, z, z->left);
+  }
+  else {
+    y = z->right;
+    while(y->left != t->nil) 
+      y = y->left;
+
+    y_original_color = y->color;
+    x = y->right;
+
+    if(y->parent != z) {
+      TransPlant(t, y, y->right);
+      y->right = z->right;
+      y->right->parent = y;
+    }
+    else if(x != t->nil) 
+      x->parent = y;
+
+    TransPlant(t, z, y);
+    y->left = z->left;
+    y->left->parent = y;
+    y->color = z->color;
+  }
+
+  if(y_original_color == RBTREE_BLACK) 
+    Delete_FixUp(t, x);
+
+  free(z);
   return 0;
 }
 
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
   // TODO: implement to_array
+  node_t *stack_arr[n];
+  node_t *cur = t->root;
+  int i = 0;
+  while (cur != t->nil) {
+    stack_arr[i] = cur;
+    i++;
+    cur = cur->left;
+  }
+  int j = 0;
+  while (i > 0 && j < n) {
+    i--;
+    node_t *temp = stack_arr[i];
+    arr[j] = temp->key;
+    j++;
+    if (temp->right != t->nil) {
+      cur = temp->right;
+      while (cur != t->nil) {
+        stack_arr[i] = cur;
+        i++;
+        cur = cur->left;
+      }
+    }
+  }
   return 0;
 }
 
