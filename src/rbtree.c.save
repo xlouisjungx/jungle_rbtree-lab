@@ -137,22 +137,20 @@ int rbtree_erase(rbtree *t, node_t *z) {
       y->right = z->right;
       y->right->parent = y;
     }
+
+    // 후계자 z의 오른쪽 자식인 경우
     else x->parent = y;
 
-    // y를 z의 자리로 올
+    // z의 왼쪽 자식을 y의 왼쪽 자식으로 연
     TransPlant(t, z, y);
-    
-    // z의 왼쪽 자식을 y의 왼쪽 자식으로 연결
     y->left = z->left;
     y->left->parent = y;
     y->color = z->color;
   }
 
-  // RB Tree의 속성을 위반하면 큰일나니까, 확인!
   if(y_original_color == RBTREE_BLACK) 
     Delete_FixUp(t, x);
 
-  // 삭제된 원래 노드 z의 메모리 해제!
   free(z);
   return 0;
 }
