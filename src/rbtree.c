@@ -125,7 +125,7 @@ int rbtree_erase(rbtree *t, node_t *z) {
     TransPlant(t, z, z->left);
   } // Case 1과 반대로 오른쪽 자식이 없으니 왼쪽 자식을 연결.
 
-  // Case3 양쪽 자식이 모두 있을
+  // Case3: z가  양쪽 자식이 모두 있을 떄
   else {
     y = successor(t, z->right); // z의 후계자를 찾아라!
     y_original_color = y->color; // 삭제된 노드의 색이 검정이면, FixUp을 위해 미리 저장.
@@ -139,7 +139,7 @@ int rbtree_erase(rbtree *t, node_t *z) {
     }
     else x->parent = y;
 
-    // y를 z의 자리로 올
+    // y를 z의 자리로 올려서 교체
     TransPlant(t, z, y);
     
     // z의 왼쪽 자식을 y의 왼쪽 자식으로 연결
@@ -150,7 +150,7 @@ int rbtree_erase(rbtree *t, node_t *z) {
 
   // RB Tree의 속성을 위반하면 큰일나니까, 확인!
   if(y_original_color == RBTREE_BLACK) 
-    Delete_FixUp(t, x);
+    Delete_FixUp(t, x); // x는 FixUp의 시작 위치를 넘김
 
   // 삭제된 원래 노드 z의 메모리 해제!
   free(z);
